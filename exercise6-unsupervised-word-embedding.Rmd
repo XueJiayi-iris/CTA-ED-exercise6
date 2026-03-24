@@ -1,3 +1,8 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
 # Exercise 6: Unsupervised learning (word embedding)
 
 ## Introduction
@@ -446,4 +451,42 @@ We can see, here, then that our embeddings seem to make sense. We zoomed in firs
 ## Exercises
 
 1. Inspect and visualize the nearest neighbour synonyms of other relevant words in the tweets corpus
+
+```{r}
+female_synonyms <- nearest_words(word_vectors, "female")
+male_synonyms <- nearest_words(word_vectors, "male")
+
+head(female_synonyms, n=10)
+head(male_synonyms, n=10)
+
+#then we can visualize
+male_synonyms %>%
+  mutate(selected = "male") %>%
+  bind_rows(female_synonyms %>%
+              mutate(selected = "female")) %>%
+  group_by(selected) %>%
+  top_n(15, similarity) %>%
+  mutate(token = reorder(word, similarity)) %>%
+  filter(token!=selected) %>%
+  ggplot(aes(token, similarity, fill = selected)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~selected, scales = "free") +
+  scale_fill_manual(values = c("purple4", "#2A3132")) +
+  coord_flip() +
+  theme_tufte(base_family = "Helvetica")
+```
+
+The plots show an evident difference between the words most associated with "female" and those associated with "male". The words appearing with female do not indicate a specific single topic, while the words appearing with male tend to have close relations to violence and delinquent behavior.
+
+
+
 2. Identify another region of interest in the GloVe-trained model and visualize
+
+```{r}
+ggplot(df_glove_umap[df_glove_umap$UMAP1 < -1 & df_glove_umap$UMAP1 > -1.5 & df_glove_umap$UMAP2 > 6 & df_glove_umap$UMAP2 < 7.5,]) +
+      geom_point(aes(x = UMAP1, y = UMAP2), colour = 'blue', size = 2) +
+      geom_text(aes(UMAP1, UMAP2, label = word), size = 2.5, vjust=-1, hjust=0) +
+      labs(title = "GloVe word embedding in 2D using UMAP - partial view") +
+      theme(plot.title = element_text(hjust = .5, size = 14))
+```
+This region in the GloVe-trained model tend to be connected with the governments' action towards certain issues, as the words "change", "reform" and "action" have the tendency to cluster together.
